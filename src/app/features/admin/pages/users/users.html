@@ -1,0 +1,100 @@
+<div class="users-page">
+
+  @if (error()) {
+    <div class="error-banner">{{ error() }}</div>
+  }
+
+  <div class="page-header">
+    <div>
+      <h1>Users</h1>
+      <p class="page-header__sub">{{ users().length }} registered users</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">+ New User</button>
+  </div>
+
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar">{{ user.username[0].toUpperCase() }}</div>
+                <div>
+                  <div class="user-cell__name">{{ user.fullName }}</div>
+                  <div class="user-cell__username">&#64;{{ user.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-secondary">{{ user.email }}</td>
+            <td><span class="role-badge role-badge--{{ user.role.toLowerCase() }}">{{ user.role }}</span></td>
+            <td>
+              <span class="status-badge" [class.status-badge--active]="user.isActive" [class.status-badge--inactive]="!user.isActive">
+                {{ user.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Edit" (click)="openEdit(user)">✏️</button>
+                <button class="btn-icon btn-icon--danger" title="Delete" (click)="deleteUser(user.id)">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+@if (modalMode()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h3>{{ modalMode() === 'create' ? 'New User' : 'Edit User' }}</h3>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="userForm" (ngSubmit)="save()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" formControlName="fullName" placeholder="Full name" />
+          </div>
+          <div class="form-group">
+            <label>Username *</label>
+            <input type="text" formControlName="username" placeholder="username" />
+          </div>
+          <div class="form-group form-group--full">
+            <label>Email *</label>
+            <input type="email" formControlName="email" placeholder="email@example.com" />
+          </div>
+          <div class="form-group">
+            <label>Role *</label>
+            <select formControlName="role">
+              @for (role of roles; track role) {
+                <option [value]="role">{{ role }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group form-check">
+            <input type="checkbox" id="userActive" formControlName="isActive" />
+            <label for="userActive">Active</label>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="userForm.invalid">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

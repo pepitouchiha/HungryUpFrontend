@@ -1,0 +1,15 @@
+<div class="stat-card" [class]="'stat-card--' + color()">
+  <div class="stat-card__header">
+    <span class="stat-card__icon">{{ icon() }}</span>
+    <span class="stat-card__title">{{ title() }}</span>
+  </div>
+  <div class="stat-card__value">{{ value() }}</div>
+  @if (subtitle()) {
+    <div class="stat-card__subtitle">{{ subtitle() }}</div>
+  }
+  @if (trend()) {
+    <div class="stat-card__trend" [class.trend--up]="trendUp()" [class.trend--down]="!trendUp()">
+      {{ trendUp() ? '▲' : '▼' }} {{ trend() }}
+    </div>
+  }
+</div>

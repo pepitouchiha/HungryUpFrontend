@@ -1,0 +1,42 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__brand-icon">🍽️</span>
+    <span class="sidebar__brand-name">HungryUp</span>
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of navItems; track item.path) {
+      <a
+        class="nav-item"
+        [routerLink]="item.path"
+        routerLinkActive="nav-item--active"
+      >
+        <span class="nav-item__icon">{{ item.icon }}</span>
+        <span class="nav-item__label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__footer">
+    @if (user()) {
+      <div class="sidebar__user">
+        <div class="sidebar__avatar">{{ user()!.username[0].toUpperCase() }}</div>
+        <div class="sidebar__user-info">
+          <span class="sidebar__user-name">{{ user()!.username }}</span>
+          <span class="sidebar__user-role">{{ user()!.role }}</span>
+        </div>
+      </div>
+    } @else {
+      <div class="sidebar__user">
+        <div class="sidebar__avatar">A</div>
+        <div class="sidebar__user-info">
+          <span class="sidebar__user-name">Admin</span>
+          <span class="sidebar__user-role">Administrator</span>
+        </div>
+      </div>
+    }
+    <button class="logout-btn" (click)="logout()">
+      <span>🚪</span> Logout
+    </button>
+  </div>
+</aside>

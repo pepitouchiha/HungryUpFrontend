@@ -1,0 +1,83 @@
+<div class="pos-layout">
+
+  <!-- ══ LEFT: Product Panel (70%) ═══════════════════════════ -->
+  <section class="product-panel">
+
+    <nav class="category-tabs">
+      @for (cat of categories(); track cat.id) {
+        <button
+          class="category-tab"
+          [class.active]="selectedCategoryId() === cat.id"
+          (click)="selectCategory(cat.id)"
+        >
+          {{ cat.nombre }}
+        </button>
+      }
+    </nav>
+
+    <div class="product-grid">
+      @for (product of filteredProducts(); track product.id) {
+        <button class="product-card" (click)="addToOrder(product)">
+          <span class="product-card__name">{{ product.nombre }}</span>
+          <span class="product-card__price">{{ product.precio | currency }}</span>
+        </button>
+      }
+    </div>
+
+  </section>
+
+  <!-- ══ RIGHT: Order Ticket (30%) ════════════════════════════ -->
+  <aside class="ticket-panel">
+
+    <div class="ticket-header">
+      <h2>Order Ticket</h2>
+      @if (orderCount() > 0) {
+        <span class="ticket-count">{{ orderCount() }} item{{ orderCount() === 1 ? '' : 's' }}</span>
+        <button class="clear-btn" (click)="clearOrder()">Clear all</button>
+      }
+    </div>
+
+    <div class="ticket-items">
+      @if (orderItems().length === 0) {
+        <div class="ticket-empty">
+          <span class="ticket-empty__icon">🧾</span>
+          <p>No items yet</p>
+          <p>Tap a product to add it</p>
+        </div>
+      } @else {
+        @for (item of orderItems(); track item.product.id) {
+          <div class="ticket-item">
+            <div class="ticket-item__top">
+              <span class="ticket-item__name">{{ item.product.nombre }}</span>
+              <span class="ticket-item__subtotal">{{ item.product.precio * item.quantity | currency }}</span>
+            </div>
+            <div class="ticket-item__bottom">
+              <span class="ticket-item__unit-price">{{ item.product.precio | currency }} each</span>
+              <div class="qty-controls">
+                <button class="qty-btn" (click)="decrement(item.product.id)">−</button>
+                <span class="qty-value">{{ item.quantity }}</span>
+                <button class="qty-btn" (click)="increment(item.product.id)">+</button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="ticket-footer">
+      <div class="ticket-total">
+        <span class="ticket-total__label">TOTAL</span>
+        <span class="ticket-total__amount">{{ orderTotal() | currency }}</span>
+      </div>
+      <button
+        class="pay-btn"
+        [disabled]="orderItems().length === 0"
+        (click)="payAndPrint()"
+      >
+        PAY &amp; PRINT
+      </button>
+    </div>
+
+  </aside>
+
+</div>

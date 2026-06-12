@@ -1,0 +1,177 @@
+<div class="gourmet-layout">
+
+  <!-- ══ HEADER ════════════════════════════════════════════ -->
+  <header class="gourmet-header">
+    <div class="header-title">
+      <span class="header-title__icon">🍽</span>
+      <h1>POS Gourmet</h1>
+    </div>
+    <div class="header-stats">
+      <div class="stat stat--free">
+        <span class="stat__dot"></span>
+        <span>{{ freeCount() }} Libre</span>
+      </div>
+      <div class="stat stat--occupied">
+        <span class="stat__dot"></span>
+        <span>{{ occupiedCount() }} Ocupada</span>
+      </div>
+      <span class="stat__total">{{ tables().length }} mesas en total</span>
+    </div>
+  </header>
+
+  <!-- ══ TABLE MAP ══════════════════════════════════════════ -->
+  <main class="table-map">
+    <div class="table-grid">
+      @for (table of tables(); track table.id) {
+        <button
+          class="table-card"
+          [class.table-card--free]="table.estado === 'Libre'"
+          [class.table-card--occupied]="table.estado === 'Ocupada'"
+          [class.table-card--selected]="selectedTable()?.id === table.id"
+          (click)="openTable(table)"
+        >
+          <span class="table-card__number">Mesa {{ table.numero }}</span>
+
+          @if (table.estado === 'Ocupada') {
+            <span class="table-card__time">{{ elapsedTime(table.activeOrder?.fechaCreacion) }}</span>
+            <span class="table-card__total">{{ tableTotal(table) | currency }}</span>
+          } @else {
+            <span class="table-card__free-label">Disponible</span>
+          }
+        </button>
+      }
+    </div>
+  </main>
+
+  <!-- ══ PANEL BACKDROP ════════════════════════════════════ -->
+  <div
+    class="panel-backdrop"
+    [class.open]="isPanelOpen()"
+    (click)="closePanel()"
+  ></div>
+
+  <!-- ══ ORDER PANEL ════════════════════════════════════════ -->
+  <aside class="order-panel" [class.open]="isPanelOpen()">
+    @if (selectedTable()) {
+      <!-- Panel Header -->
+      <div class="panel-header">
+        <div class="panel-header__info">
+          <h2>Mesa {{ selectedTable()!.numero }}</h2>
+          <span
+            class="panel-header__badge"
+            [class.badge--free]="selectedTable()!.estado === 'Libre'"
+            [class.badge--occupied]="selectedTable()!.estado === 'Ocupada'"
+          >
+            @if (selectedTable()!.estado === 'Ocupada') {
+              Ocupada · {{ elapsedTime(selectedTable()!.activeOrder?.fechaCreacion) }}
+            } @else {
+              Libre
+            }
+          </span>
+        </div>
+        <button class="close-btn" (click)="closePanel()">✕</button>
+      </div>
+
+      <!-- Existing Tab (OCCUPIED only) -->
+      @if (selectedTable()!.estado === 'Ocupada') {
+        <div class="existing-tab">
+          <p class="existing-tab__label">Comanda Actual</p>
+          @for (item of openTabItems(); track $index) {
+            <div class="existing-item">
+              <span class="existing-item__name">{{ item.nombre }}</span>
+              <span class="existing-item__qty">×{{ item.cantidad }}</span>
+              <span class="existing-item__price">{{ item.total | currency }}</span>
+            </div>
+          }
+          <div class="existing-tab__subtotal">
+            <span>Subtotal comanda</span>
+            <span>{{ existingTotal() | currency }}</span>
+          </div>
+        </div>
+        <div class="panel-section-label">Agregar más ítems</div>
+      }
+
+      <!-- Category Tabs -->
+      <nav class="panel-category-tabs">
+        @for (cat of categories(); track cat.id) {
+          <button
+            class="panel-tab"
+            [class.active]="selectedCategoryId() === cat.id"
+            (click)="selectCategory(cat.id)"
+          >
+            {{ cat.nombre }}
+          </button>
+        }
+      </nav>
+
+      <!-- Product Grid -->
+      <div class="panel-product-grid">
+        @for (product of filteredProducts(); track product.id) {
+          <button class="panel-product-card" (click)="addToPanel(product)">
+            <span class="panel-product-card__name">{{ product.nombre }}</span>
+            <span class="panel-product-card__price">{{ product.precio | currency }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- New Items Being Added -->
+      @if (panelOrderItems().length > 0) {
+        <div class="new-items">
+          <p class="new-items__label">
+            {{ selectedTable()!.estado === 'Ocupada' ? 'Ítems a agregar' : 'Nuevo pedido' }}
+          </p>
+          @for (item of panelOrderItems(); track item.product.id) {
+            <div class="new-item">
+              <div class="new-item__info">
+                <span class="new-item__name">{{ item.product.nombre }}</span>
+                <span class="new-item__subtotal">{{ item.product.precio * item.quantity | currency }}</span>
+              </div>
+              <div class="qty-controls">
+                <button class="qty-btn" (click)="decrementPanel(item.product.id)">−</button>
+                <span class="qty-value">{{ item.quantity }}</span>
+                <button class="qty-btn" (click)="incrementPanel(item.product.id)">+</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Panel Footer -->
+      <div class="panel-footer">
+        <div class="panel-total">
+          <span class="panel-total__label">
+            {{ selectedTable()!.estado === 'Ocupada' ? 'Total General' : 'Total Pedido' }}
+          </span>
+          <span class="panel-total__amount">{{ grandTotal() | currency }}</span>
+        </div>
+
+        @if (selectedTable()!.estado === 'Libre') {
+          <button
+            class="cta-btn cta-btn--kitchen"
+            [disabled]="panelOrderItems().length === 0"
+            (click)="sendToKitchen()"
+          >
+            ENVIAR A COCINA
+          </button>
+        } @else {
+          <div class="dual-cta">
+            <button
+              class="cta-btn cta-btn--add"
+              [disabled]="panelOrderItems().length === 0"
+              (click)="addToTab()"
+            >
+              AGREGAR A COMANDA
+            </button>
+            <button
+              class="cta-btn cta-btn--bill"
+              (click)="requestBill()"
+            >
+              COBRAR
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </aside>
+
+</div>

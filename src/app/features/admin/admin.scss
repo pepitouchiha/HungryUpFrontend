@@ -1,0 +1,21 @@
+:host { display: block; height: 100vh; overflow: hidden; }
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0f172a;
+}
+
+.admin-content {
+  overflow-y: auto;
+  background-color: #0f172a;
+  padding-bottom: 64px;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 999px;
+  }
+}

@@ -1,0 +1,105 @@
+<div class="monitor-layout">
+
+  <header class="monitor-header">
+    <div class="monitor-header__title">
+      <span class="monitor-header__icon">📋</span>
+      <h1>Order Monitor</h1>
+    </div>
+    <div class="monitor-header__stats">
+      <span class="stat-pill stat-pill--new">{{ pendingOrders().length }} Nuevos</span>
+      <span class="stat-pill stat-pill--prep">{{ inPrepOrders().length }} En Prep</span>
+    </div>
+  </header>
+
+  <div class="kanban-board">
+
+    <!-- ══ PENDIENTE ════════════════════════════════════════════ -->
+    <div class="kanban-col kanban-col--new">
+      <div class="kanban-col__header">
+        <span class="kanban-col__dot"></span>
+        <span class="kanban-col__label">Nuevo</span>
+        <span class="kanban-col__count">{{ pendingOrders().length }}</span>
+      </div>
+      <div class="kanban-col__cards">
+        @for (order of pendingOrders(); track order.id) {
+          <div class="docket docket--new">
+            <div class="docket__top">
+              <span class="docket__number">{{ orderNumber(order) }}</span>
+              <span class="docket__type"
+                [class.type--fastfood]="order.tipo === 'FastFood'"
+                [class.type--gourmet]="order.tipo === 'Gourmet'">
+                {{ order.tipo === 'FastFood' ? '🍔 Fast Food' : '🍷 Gourmet' }}
+              </span>
+            </div>
+            <div class="docket__location">
+              {{ locationLabel(order) }}
+              <span class="docket__time">· {{ elapsed(order.fechaCreacion) }}</span>
+            </div>
+            <div class="docket__items">
+              @for (item of order.detalles; track item.productoId) {
+                <div class="docket__item">
+                  <span class="docket__item-qty">{{ item.cantidad }}×</span>
+                  <span class="docket__item-name">{{ productName(item.productoId) }}</span>
+                </div>
+              }
+            </div>
+            <div class="docket__footer">
+              <span class="docket__total">{{ orderTotal(order) | currency }}</span>
+              <button class="docket__action docket__action--fire" (click)="fireOrder(order.id)">
+                FIRE →
+              </button>
+            </div>
+          </div>
+        }
+        @if (pendingOrders().length === 0) {
+          <div class="kanban-empty">Sin órdenes nuevas</div>
+        }
+      </div>
+    </div>
+
+    <!-- ══ EN PREPARACIÓN ════════════════════════════════════════ -->
+    <div class="kanban-col kanban-col--prep">
+      <div class="kanban-col__header">
+        <span class="kanban-col__dot"></span>
+        <span class="kanban-col__label">En Preparación</span>
+        <span class="kanban-col__count">{{ inPrepOrders().length }}</span>
+      </div>
+      <div class="kanban-col__cards">
+        @for (order of inPrepOrders(); track order.id) {
+          <div class="docket docket--prep">
+            <div class="docket__top">
+              <span class="docket__number">{{ orderNumber(order) }}</span>
+              <span class="docket__type"
+                [class.type--fastfood]="order.tipo === 'FastFood'"
+                [class.type--gourmet]="order.tipo === 'Gourmet'">
+                {{ order.tipo === 'FastFood' ? '🍔 Fast Food' : '🍷 Gourmet' }}
+              </span>
+            </div>
+            <div class="docket__location">
+              {{ locationLabel(order) }}
+              <span class="docket__time">· {{ elapsed(order.fechaCreacion) }}</span>
+            </div>
+            <div class="docket__items">
+              @for (item of order.detalles; track item.productoId) {
+                <div class="docket__item">
+                  <span class="docket__item-qty">{{ item.cantidad }}×</span>
+                  <span class="docket__item-name">{{ productName(item.productoId) }}</span>
+                </div>
+              }
+            </div>
+            <div class="docket__footer">
+              <span class="docket__total">{{ orderTotal(order) | currency }}</span>
+              <button class="docket__action docket__action--ready" (click)="completeOrder(order.id)">
+                LISTO ✓
+              </button>
+            </div>
+          </div>
+        }
+        @if (inPrepOrders().length === 0) {
+          <div class="kanban-empty">Nada en preparación</div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>

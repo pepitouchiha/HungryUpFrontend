@@ -1,0 +1,129 @@
+<div class="catalog-page">
+  <div class="page-header">
+    <div>
+      <h1>Catálogo</h1>
+      <p class="page-header__sub">Categorías y productos del menú</p>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products')">
+        Productos <span class="tab-count">{{ products().length }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories')">
+        Categorías <span class="tab-count">{{ categories().length }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PRODUCTS TAB ════════════════════════════════════════ -->
+  @if (activeTab() === 'products') {
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span class="table-toolbar__info">{{ products().length }} productos</span>
+        <button class="btn-primary" (click)="openCreateProduct()">+ Nuevo Producto</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prod of products(); track prod.id) {
+            <tr>
+              <td class="cell-name">{{ prod.nombre }}</td>
+              <td><span class="category-chip">{{ categoryName(prod.categoriaId) }}</span></td>
+              <td class="cell-price">{{ prod.precio | currency }}</td>
+              <td class="text-secondary">{{ prod.stockActual }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ══ CATEGORIES TAB ════════════════════════════════════════ -->
+  @if (activeTab() === 'categories') {
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span class="table-toolbar__info">{{ categories().length }} categorías</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cat of categories(); track cat.id) {
+            <tr>
+              <td class="cell-name">{{ cat.nombre }}</td>
+              <td>
+                <span class="status-badge" [class.status-badge--active]="cat.activo" [class.status-badge--inactive]="!cat.activo">
+                  {{ cat.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- ══ PRODUCT MODAL ═════════════════════════════════════════ -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h3>Nuevo Producto</h3>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+        <div class="form-body">
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label>Nombre <span class="required">*</span></label>
+              <input type="text" formControlName="nombre" placeholder="ej. Hamburguesa Clásica" />
+              @if (productForm.get('nombre')?.invalid && productForm.get('nombre')?.touched) {
+                <span class="field-error">El nombre es requerido.</span>
+              }
+            </div>
+            <div class="form-group">
+              <label>Precio <span class="required">*</span></label>
+              <input type="number" formControlName="precio" min="0.01" step="0.01" placeholder="0.00" />
+              @if (productForm.get('precio')?.invalid && productForm.get('precio')?.touched) {
+                <span class="field-error">Ingresa un precio válido.</span>
+              }
+            </div>
+            <div class="form-group">
+              <label>Stock Inicial <span class="required">*</span></label>
+              <input type="number" formControlName="stockInicial" min="0" step="1" placeholder="0" />
+            </div>
+            <div class="form-group form-group--full">
+              <label>Categoría <span class="required">*</span></label>
+              <select formControlName="categoriaId">
+                <option value="" disabled>Selecciona una categoría</option>
+                @for (cat of categories(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.nombre }}</option>
+                }
+              </select>
+              @if (productForm.get('categoriaId')?.invalid && productForm.get('categoriaId')?.touched) {
+                <span class="field-error">Selecciona una categoría.</span>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="productForm.invalid">
+            Crear Producto
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
