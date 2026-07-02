@@ -36,16 +36,21 @@
               </div>
             </td>
             <td class="text-secondary">{{ user.email }}</td>
-            <td><span class="role-badge role-badge--{{ user.role.toLowerCase() }}">{{ user.role }}</span></td>
+            <td><span class="role-badge role-badge--{{ user.rol.toLowerCase() }}">{{ user.rol }}</span></td>
             <td>
-              <span class="status-badge" [class.status-badge--active]="user.isActive" [class.status-badge--inactive]="!user.isActive">
-                {{ user.isActive ? 'Active' : 'Inactive' }}
+              <span class="status-badge" [class.status-badge--active]="user.activo" [class.status-badge--inactive]="!user.activo">
+                {{ user.activo ? 'Active' : 'Inactive' }}
               </span>
             </td>
             <td>
               <div class="action-btns">
                 <button class="btn-icon" title="Edit" (click)="openEdit(user)">✏️</button>
-                <button class="btn-icon btn-icon--danger" title="Delete" (click)="deleteUser(user.id)">🗑️</button>
+                <button class="btn-icon" title="Change password" (click)="openChangePassword(user)">🔑</button>
+                @if (user.activo) {
+                  <button class="btn-icon btn-icon--danger" title="Deactivate" (click)="deleteUser(user.id)">🗑️</button>
+                } @else {
+                  <button class="btn-icon btn-icon--success" title="Restore" (click)="restoreUser(user)">♻️</button>
+                }
               </div>
             </td>
           </tr>
@@ -55,7 +60,7 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- User modal -->
 @if (modalMode()) {
   <div class="modal-backdrop" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
@@ -64,6 +69,9 @@
         <button class="close-btn" (click)="closeModal()">✕</button>
       </div>
       <form [formGroup]="userForm" (ngSubmit)="save()">
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
         <div class="form-grid">
           <div class="form-group">
             <label>Full Name *</label>
@@ -72,27 +80,65 @@
           <div class="form-group">
             <label>Username *</label>
             <input type="text" formControlName="username" placeholder="username" />
+            @if (modalMode() === 'edit') {
+              <span class="field-hint">El username no se puede modificar.</span>
+            }
           </div>
           <div class="form-group form-group--full">
             <label>Email *</label>
             <input type="email" formControlName="email" placeholder="email@example.com" />
           </div>
+          @if (modalMode() === 'create') {
+            <div class="form-group form-group--full">
+              <label>Password *</label>
+              <input type="password" formControlName="password" placeholder="Password" />
+            </div>
+          }
           <div class="form-group">
             <label>Role *</label>
-            <select formControlName="role">
+            <select formControlName="rol">
               @for (role of roles; track role) {
                 <option [value]="role">{{ role }}</option>
               }
             </select>
           </div>
-          <div class="form-group form-check">
-            <input type="checkbox" id="userActive" formControlName="isActive" />
-            <label for="userActive">Active</label>
-          </div>
+          @if (modalMode() === 'edit') {
+            <div class="form-group form-check">
+              <input type="checkbox" id="userActive" formControlName="activo" />
+              <label for="userActive">Active</label>
+            </div>
+          }
         </div>
         <div class="modal__footer">
           <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
           <button type="submit" class="btn-primary" [disabled]="userForm.invalid">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Change password modal -->
+@if (passwordTargetId()) {
+  <div class="modal-backdrop" (click)="closePasswordModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h3>Change Password</h3>
+        <button class="close-btn" (click)="closePasswordModal()">✕</button>
+      </div>
+      <form [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+        @if (formError()) {
+          <div class="form-error-banner">{{ formError() }}</div>
+        }
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>New Password *</label>
+            <input type="password" formControlName="newPassword" placeholder="New password" />
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button type="button" class="btn-secondary" (click)="closePasswordModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="passwordForm.invalid">Save Password</button>
         </div>
       </form>
     </div>

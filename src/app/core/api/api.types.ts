@@ -9,6 +9,7 @@ export interface ProductoDto {
   precio: number;
   stockActual: number;
   categoriaId: string;
+  imagenUrl: string | null;
 }
 
 export interface CreateProductoDto {
@@ -16,6 +17,7 @@ export interface CreateProductoDto {
   precio: number;
   stockInicial: number;
   categoriaId: string;
+  imagenUrl?: string | null;
 }
 
 // ── Orders ───────────────────────────────────────────────────────────────────

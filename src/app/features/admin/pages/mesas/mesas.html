@@ -1,0 +1,100 @@
+<div class="mesas-page">
+  <div class="page-header">
+    <div>
+      <h1>Mesas</h1>
+      <p class="page-header__sub">Mesas del restaurante</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">+ Nueva Mesa</button>
+  </div>
+
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span class="table-toolbar__info">{{ mesas().length }} mesas</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Estado</th>
+          <th>Activa</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (mesa of mesas(); track mesa.id) {
+          <tr>
+            <td class="cell-name">Mesa #{{ mesa.numero }}</td>
+            <td>
+              <span class="estado-badge" [class.estado-badge--libre]="mesa.estado === 'Libre'" [class.estado-badge--ocupada]="mesa.estado === 'Ocupada'">
+                {{ mesa.estado }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-badge--active]="mesa.activo" [class.status-badge--inactive]="!mesa.activo">
+                {{ mesa.activo ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="Editar" (click)="openEdit(mesa)">✏️</button>
+                @if (mesa.activo) {
+                  <button class="btn-icon btn-icon--danger" title="Desactivar" (click)="deleteMesa(mesa)">🗑️</button>
+                } @else {
+                  <button class="btn-icon btn-icon--success" title="Restaurar" (click)="restoreMesa(mesa)">♻️</button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ MESA MODAL ════════════════════════════════════════════ -->
+@if (modalMode()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h3>{{ modalMode() === 'create' ? 'Nueva Mesa' : 'Editar Mesa' }}</h3>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="mesaForm" (ngSubmit)="save()">
+        <div class="form-body">
+          @if (formError()) {
+            <div class="form-error-banner">{{ formError() }}</div>
+          }
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label>Número <span class="required">*</span></label>
+              <input type="number" formControlName="numero" min="1" step="1" placeholder="1" />
+              @if (mesaForm.get('numero')?.invalid && mesaForm.get('numero')?.touched) {
+                <span class="field-error">Ingresa un número de mesa válido.</span>
+              }
+            </div>
+            @if (modalMode() === 'edit') {
+              <div class="form-group">
+                <label>Estado</label>
+                <select formControlName="estado">
+                  @for (estado of estados; track estado) {
+                    <option [value]="estado">{{ estado }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group form-check">
+                <input type="checkbox" id="mesaActive" formControlName="activo" />
+                <label for="mesaActive">Activa</label>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="mesaForm.invalid">
+            {{ modalMode() === 'create' ? 'Crear Mesa' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

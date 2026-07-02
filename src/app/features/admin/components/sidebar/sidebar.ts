@@ -16,6 +16,7 @@ export class Sidebar {
   protected navItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/admin/catalog',   label: 'Catalog',   icon: '🗂️' },
+    { path: '/admin/mesas',     label: 'Mesas',     icon: '🍽️' },
     { path: '/admin/users',     label: 'Users',     icon: '👥' },
   ];
 

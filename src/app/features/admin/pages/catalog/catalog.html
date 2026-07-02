@@ -24,19 +24,34 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th>Imagen</th>
             <th>Nombre</th>
             <th>Categoría</th>
             <th>Precio</th>
             <th>Stock</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (prod of products(); track prod.id) {
             <tr>
+              <td>
+                @if (prod.imagenUrl) {
+                  <img class="product-thumb" [src]="prod.imagenUrl" [alt]="prod.nombre" />
+                } @else {
+                  <div class="product-thumb product-thumb--placeholder">🍽️</div>
+                }
+              </td>
               <td class="cell-name">{{ prod.nombre }}</td>
               <td><span class="category-chip">{{ categoryName(prod.categoriaId) }}</span></td>
-              <td class="cell-price">{{ prod.precio | currency }}</td>
+              <td class="cell-price">{{ prod.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }}</td>
               <td class="text-secondary">{{ prod.stockActual }}</td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="Editar" (click)="openEditProduct(prod)">✏️</button>
+                  <button class="btn-icon btn-icon--danger" title="Eliminar" (click)="deleteProduct(prod)">🗑️</button>
+                </div>
+              </td>
             </tr>
           }
         </tbody>
@@ -49,12 +64,14 @@
     <div class="table-card">
       <div class="table-toolbar">
         <span class="table-toolbar__info">{{ categories().length }} categorías</span>
+        <button class="btn-primary" (click)="openCreateCategory()">+ Nueva Categoría</button>
       </div>
       <table class="data-table">
         <thead>
           <tr>
             <th>Nombre</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -66,6 +83,16 @@
                   {{ cat.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="Editar" (click)="openEditCategory(cat)">✏️</button>
+                  @if (cat.activo) {
+                    <button class="btn-icon btn-icon--danger" title="Desactivar" (click)="deleteCategory(cat)">🗑️</button>
+                  } @else {
+                    <button class="btn-icon btn-icon--success" title="Restaurar" (click)="restoreCategory(cat)">♻️</button>
+                  }
+                </div>
+              </td>
             </tr>
           }
         </tbody>
@@ -75,12 +102,12 @@
 </div>
 
 <!-- ══ PRODUCT MODAL ═════════════════════════════════════════ -->
-@if (showModal()) {
-  <div class="modal-backdrop" (click)="closeModal()">
+@if (productModalMode()) {
+  <div class="modal-backdrop" (click)="closeProductModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal__header">
-        <h3>Nuevo Producto</h3>
-        <button class="close-btn" (click)="closeModal()">✕</button>
+        <h3>{{ productModalMode() === 'create' ? 'Nuevo Producto' : 'Editar Producto' }}</h3>
+        <button class="close-btn" (click)="closeProductModal()">✕</button>
       </div>
       <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
         <div class="form-body">
@@ -93,15 +120,15 @@
               }
             </div>
             <div class="form-group">
-              <label>Precio <span class="required">*</span></label>
-              <input type="number" formControlName="precio" min="0.01" step="0.01" placeholder="0.00" />
+              <label>Precio (COP) <span class="required">*</span></label>
+              <input type="number" formControlName="precio" min="0" step="1" placeholder="0" />
               @if (productForm.get('precio')?.invalid && productForm.get('precio')?.touched) {
-                <span class="field-error">Ingresa un precio válido.</span>
+                <span class="field-error">Ingresa un precio entero válido (sin decimales).</span>
               }
             </div>
             <div class="form-group">
-              <label>Stock Inicial <span class="required">*</span></label>
-              <input type="number" formControlName="stockInicial" min="0" step="1" placeholder="0" />
+              <label>Stock <span class="required">*</span></label>
+              <input type="number" formControlName="stock" min="0" step="1" placeholder="0" />
             </div>
             <div class="form-group form-group--full">
               <label>Categoría <span class="required">*</span></label>
@@ -116,11 +143,72 @@
               }
             </div>
           </div>
+
+          @if (productModalMode() === 'edit') {
+            <div class="form-group form-group--full image-uploader">
+              <label>Imagen del producto</label>
+              <div class="image-uploader__row">
+                @if (editingProductImage()) {
+                  <img class="product-thumb" [src]="editingProductImage()" alt="Vista previa" />
+                } @else {
+                  <div class="product-thumb product-thumb--placeholder">🍽️</div>
+                }
+                <div class="image-uploader__controls">
+                  <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif" (change)="onFileSelected($event)" />
+                  <button type="button" class="btn-secondary" [disabled]="!selectedFile() || uploadingImage()" (click)="uploadImage()">
+                    {{ uploadingImage() ? 'Subiendo...' : 'Subir imagen' }}
+                  </button>
+                </div>
+              </div>
+              <span class="field-hint">Formatos: jpg, jpeg, png, webp, gif. Máx. 5 MB.</span>
+            </div>
+          } @else {
+            <p class="field-hint">Podrás subir una imagen una vez creado el producto.</p>
+          }
         </div>
         <div class="modal__footer">
-          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="btn-secondary" (click)="closeProductModal()">
+            {{ productModalMode() === 'edit' ? 'Cerrar' : 'Cancelar' }}
+          </button>
           <button type="submit" class="btn-primary" [disabled]="productForm.invalid">
-            Crear Producto
+            {{ productModalMode() === 'create' ? 'Crear Producto' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ══ CATEGORY MODAL ════════════════════════════════════════ -->
+@if (categoryModalMode()) {
+  <div class="modal-backdrop" (click)="closeCategoryModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h3>{{ categoryModalMode() === 'create' ? 'Nueva Categoría' : 'Editar Categoría' }}</h3>
+        <button class="close-btn" (click)="closeCategoryModal()">✕</button>
+      </div>
+      <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()">
+        <div class="form-body">
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label>Nombre <span class="required">*</span></label>
+              <input type="text" formControlName="nombre" placeholder="ej. Bebidas" />
+              @if (categoryForm.get('nombre')?.invalid && categoryForm.get('nombre')?.touched) {
+                <span class="field-error">El nombre es requerido.</span>
+              }
+            </div>
+            @if (categoryModalMode() === 'edit') {
+              <div class="form-group form-check">
+                <input type="checkbox" id="catActive" formControlName="activo" />
+                <label for="catActive">Activa</label>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button type="button" class="btn-secondary" (click)="closeCategoryModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="categoryForm.invalid">
+            {{ categoryModalMode() === 'create' ? 'Crear Categoría' : 'Guardar Cambios' }}
           </button>
         </div>
       </form>

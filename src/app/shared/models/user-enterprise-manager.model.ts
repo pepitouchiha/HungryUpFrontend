@@ -6,8 +6,6 @@ export interface UserEnterpriseManager {
   email: string;
   fullName: string;
   role: UserRole;
-  token: string;
-  tokenExpiration: string;
   enterpriseId: number;
   enterpriseName: string;
 }
@@ -17,8 +15,8 @@ export interface UserProfile {
   username: string;
   fullName: string;
   email: string;
-  role: UserRole;
-  isActive: boolean;
+  rol: UserRole;
+  activo: boolean;
 }
 
 export interface CreateUserRequest {
@@ -26,7 +24,14 @@ export interface CreateUserRequest {
   password: string;
   fullName: string;
   email: string;
-  role: UserRole;
+  rol: UserRole;
+}
+
+export interface UpdateUserRequest {
+  email: string;
+  fullName: string;
+  rol: UserRole;
+  activo: boolean;
 }
 
 export interface LoginCredentials {

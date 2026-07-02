@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MesaDto } from '../../shared/models/table.model';
+import { MesaDto, CreateMesaDto, UpdateMesaDto } from '../../shared/models/table.model';
 
 @Injectable({ providedIn: 'root' })
 export class TableService {
@@ -9,5 +9,21 @@ export class TableService {
 
   getTables(): Observable<MesaDto[]> {
     return this.http.get<MesaDto[]>('/api/v1/orders/mesas');
+  }
+
+  getMesas(): Observable<MesaDto[]> {
+    return this.http.get<MesaDto[]>('/api/v1/mesas');
+  }
+
+  createMesa(data: CreateMesaDto): Observable<MesaDto> {
+    return this.http.post<MesaDto>('/api/v1/mesas', data);
+  }
+
+  updateMesa(id: string, data: UpdateMesaDto): Observable<MesaDto> {
+    return this.http.put<MesaDto>(`/api/v1/mesas/${id}`, data);
+  }
+
+  deleteMesa(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/mesas/${id}`);
   }
 }

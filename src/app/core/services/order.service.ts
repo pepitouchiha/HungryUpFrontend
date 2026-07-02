@@ -14,6 +14,10 @@ export class OrderService {
     return this.http.get<PedidoDto[]>('/api/v1/orders');
   }
 
+  getDeliveredToday(): Observable<PedidoDto[]> {
+    return this.http.get<PedidoDto[]>('/api/v1/orders/delivered-today');
+  }
+
   createOrder(data: CreatePedidoDto): Observable<PedidoDto> {
     return this.http.post<PedidoDto>('/api/v1/orders', data);
   }

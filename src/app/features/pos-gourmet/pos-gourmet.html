@@ -34,7 +34,7 @@
 
           @if (table.estado === 'Ocupada') {
             <span class="table-card__time">{{ elapsedTime(table.activeOrder?.fechaCreacion) }}</span>
-            <span class="table-card__total">{{ tableTotal(table) | currency }}</span>
+            <span class="table-card__total">{{ tableTotal(table) | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
           } @else {
             <span class="table-card__free-label">Disponible</span>
           }
@@ -80,12 +80,12 @@
             <div class="existing-item">
               <span class="existing-item__name">{{ item.nombre }}</span>
               <span class="existing-item__qty">×{{ item.cantidad }}</span>
-              <span class="existing-item__price">{{ item.total | currency }}</span>
+              <span class="existing-item__price">{{ item.total | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
             </div>
           }
           <div class="existing-tab__subtotal">
             <span>Subtotal comanda</span>
-            <span>{{ existingTotal() | currency }}</span>
+            <span>{{ existingTotal() | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
           </div>
         </div>
         <div class="panel-section-label">Agregar más ítems</div>
@@ -109,7 +109,7 @@
         @for (product of filteredProducts(); track product.id) {
           <button class="panel-product-card" (click)="addToPanel(product)">
             <span class="panel-product-card__name">{{ product.nombre }}</span>
-            <span class="panel-product-card__price">{{ product.precio | currency }}</span>
+            <span class="panel-product-card__price">{{ product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
           </button>
         }
       </div>
@@ -124,7 +124,7 @@
             <div class="new-item">
               <div class="new-item__info">
                 <span class="new-item__name">{{ item.product.nombre }}</span>
-                <span class="new-item__subtotal">{{ item.product.precio * item.quantity | currency }}</span>
+                <span class="new-item__subtotal">{{ item.product.precio * item.quantity | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
               </div>
               <div class="qty-controls">
                 <button class="qty-btn" (click)="decrementPanel(item.product.id)">−</button>
@@ -142,7 +142,7 @@
           <span class="panel-total__label">
             {{ selectedTable()!.estado === 'Ocupada' ? 'Total General' : 'Total Pedido' }}
           </span>
-          <span class="panel-total__amount">{{ grandTotal() | currency }}</span>
+          <span class="panel-total__amount">{{ grandTotal() | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
         </div>
 
         @if (selectedTable()!.estado === 'Libre') {

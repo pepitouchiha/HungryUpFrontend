@@ -19,13 +19,17 @@ export class OrderMonitor implements OnInit {
   private catalogService = inject(CatalogService);
   private tableService   = inject(TableService);
 
-  private _orders     = signal<PedidoDto[]>([]);
-  private _productMap = signal<Map<string, ProductoDto>>(new Map());
-  private _tableMap   = signal<Map<string, number>>(new Map());
-  protected loading   = signal(true);
+  private _orders          = signal<PedidoDto[]>([]);
+  private _deliveredToday  = signal<PedidoDto[]>([]);
+  private _productMap      = signal<Map<string, ProductoDto>>(new Map());
+  private _tableMap        = signal<Map<string, number>>(new Map());
+  protected loading        = signal(true);
 
-  protected pendingOrders = computed(() => this._orders().filter(o => o.estadoPrep === 'Pendiente'));
-  protected inPrepOrders  = computed(() => this._orders().filter(o => o.estadoPrep === 'EnPreparacion'));
+  protected pendingOrders   = computed(() => this._orders().filter(o => o.estadoPrep === 'Pendiente'));
+  protected inPrepOrders    = computed(() => this._orders().filter(o => o.estadoPrep === 'EnPreparacion'));
+  protected deliveredOrders = computed(() =>
+    [...this._deliveredToday()].sort((a, b) => b.fechaCreacion.localeCompare(a.fechaCreacion))
+  );
 
   ngOnInit(): void {
     this.load();
@@ -69,19 +73,27 @@ export class OrderMonitor implements OnInit {
 
   protected completeOrder(id: string): void {
     this.orderService.updateStatus(id, 'Entregado').subscribe({
-      next: () => this._orders.update(orders => orders.filter(o => o.id !== id)),
+      next: () => {
+        const order = this._orders().find(o => o.id === id);
+        this._orders.update(orders => orders.filter(o => o.id !== id));
+        if (order) {
+          this._deliveredToday.update(delivered => [{ ...order, estadoPrep: 'Entregado' as const }, ...delivered]);
+        }
+      },
       error: err => console.error('State update failed', err)
     });
   }
 
   private load(): void {
     forkJoin({
-      orders:   this.orderService.getOrders(),
-      products: this.catalogService.getProducts(),
-      tables:   this.tableService.getTables()
+      orders:    this.orderService.getOrders(),
+      delivered: this.orderService.getDeliveredToday(),
+      products:  this.catalogService.getProducts(),
+      tables:    this.tableService.getTables()
     }).subscribe({
-      next: ({ orders, products, tables }) => {
+      next: ({ orders, delivered, products, tables }) => {
         this._orders.set(orders.filter(o => o.estadoPrep !== 'Entregado'));
+        this._deliveredToday.set(delivered);
         this._productMap.set(new Map(products.map(p => [p.id, p])));
         this._tableMap.set(new Map(tables.map(t => [t.id, t.numero])));
         this.loading.set(false);

@@ -9,23 +9,41 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface UserSession {
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
+export interface AuthResponse {
   id: number;
   username: string;
   email: string;
   fullName: string;
   role: string;
-  token: string;
-  tokenExpiration: string;
   enterpriseId: number;
   enterpriseName: string;
+  accessToken: string;
+  accessTokenExpiration: string;
+  refreshToken: string;
+  refreshTokenExpiration: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
   private http = inject(HttpClient);
 
-  login(dto: LoginRequest): Observable<UserSession> {
-    return this.http.post<UserSession>(`${BASE}/login`, dto);
+  login(dto: LoginRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${BASE}/login`, dto);
+  }
+
+  refresh(dto: RefreshRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${BASE}/refresh`, dto);
+  }
+
+  logout(dto: LogoutRequest): Observable<void> {
+    return this.http.post<void>(`${BASE}/logout`, dto);
   }
 }

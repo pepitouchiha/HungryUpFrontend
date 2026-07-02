@@ -19,7 +19,7 @@
       @for (product of filteredProducts(); track product.id) {
         <button class="product-card" (click)="addToOrder(product)">
           <span class="product-card__name">{{ product.nombre }}</span>
-          <span class="product-card__price">{{ product.precio | currency }}</span>
+          <span class="product-card__price">{{ product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
         </button>
       }
     </div>
@@ -49,10 +49,10 @@
           <div class="ticket-item">
             <div class="ticket-item__top">
               <span class="ticket-item__name">{{ item.product.nombre }}</span>
-              <span class="ticket-item__subtotal">{{ item.product.precio * item.quantity | currency }}</span>
+              <span class="ticket-item__subtotal">{{ item.product.precio * item.quantity | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
             </div>
             <div class="ticket-item__bottom">
-              <span class="ticket-item__unit-price">{{ item.product.precio | currency }} each</span>
+              <span class="ticket-item__unit-price">{{ item.product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }} each</span>
               <div class="qty-controls">
                 <button class="qty-btn" (click)="decrement(item.product.id)">−</button>
                 <span class="qty-value">{{ item.quantity }}</span>
@@ -67,7 +67,7 @@
     <div class="ticket-footer">
       <div class="ticket-total">
         <span class="ticket-total__label">TOTAL</span>
-        <span class="ticket-total__amount">{{ orderTotal() | currency }}</span>
+        <span class="ticket-total__amount">{{ orderTotal() | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
       </div>
       <button
         class="pay-btn"

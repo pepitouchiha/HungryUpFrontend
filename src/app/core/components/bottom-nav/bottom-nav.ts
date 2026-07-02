@@ -30,4 +30,8 @@ export class BottomNav {
     const isAdmin = this.user()?.role === 'Admin';
     return NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
   });
+
+  protected logout(): void {
+    this.authService.logout();
+  }
 }

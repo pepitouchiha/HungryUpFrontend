@@ -8,6 +8,7 @@
     <div class="monitor-header__stats">
       <span class="stat-pill stat-pill--new">{{ pendingOrders().length }} Nuevos</span>
       <span class="stat-pill stat-pill--prep">{{ inPrepOrders().length }} En Prep</span>
+      <span class="stat-pill stat-pill--ready">{{ deliveredOrders().length }} Entregados hoy</span>
     </div>
   </header>
 
@@ -44,7 +45,7 @@
               }
             </div>
             <div class="docket__footer">
-              <span class="docket__total">{{ orderTotal(order) | currency }}</span>
+              <span class="docket__total">{{ orderTotal(order) | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
               <button class="docket__action docket__action--fire" (click)="fireOrder(order.id)">
                 FIRE →
               </button>
@@ -88,7 +89,7 @@
               }
             </div>
             <div class="docket__footer">
-              <span class="docket__total">{{ orderTotal(order) | currency }}</span>
+              <span class="docket__total">{{ orderTotal(order) | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
               <button class="docket__action docket__action--ready" (click)="completeOrder(order.id)">
                 LISTO ✓
               </button>
@@ -97,6 +98,50 @@
         }
         @if (inPrepOrders().length === 0) {
           <div class="kanban-empty">Nada en preparación</div>
+        }
+      </div>
+    </div>
+
+    <!-- ══ ENTREGADOS HOY ════════════════════════════════════════ -->
+    <div class="kanban-col kanban-col--ready">
+      <div class="kanban-col__header">
+        <span class="kanban-col__dot"></span>
+        <span class="kanban-col__label">Entregados hoy</span>
+        <span class="kanban-col__count">{{ deliveredOrders().length }}</span>
+      </div>
+      <div class="kanban-col__cards">
+        @for (order of deliveredOrders(); track order.id) {
+          <div class="docket docket--ready">
+            <div class="docket__top">
+              <span class="docket__number">{{ orderNumber(order) }}</span>
+              <span class="docket__type"
+                [class.type--fastfood]="order.tipo === 'FastFood'"
+                [class.type--gourmet]="order.tipo === 'Gourmet'">
+                {{ order.tipo === 'FastFood' ? '🍔 Fast Food' : '🍷 Gourmet' }}
+              </span>
+            </div>
+            <div class="docket__location">
+              {{ locationLabel(order) }}
+              <span class="docket__time">· {{ elapsed(order.fechaCreacion) }}</span>
+            </div>
+            <div class="docket__items">
+              @for (item of order.detalles; track item.productoId) {
+                <div class="docket__item">
+                  <span class="docket__item-qty">{{ item.cantidad }}×</span>
+                  <span class="docket__item-name">{{ productName(item.productoId) }}</span>
+                </div>
+              }
+            </div>
+            <div class="docket__footer">
+              <span class="docket__total">{{ orderTotal(order) | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
+              <span class="docket__paid-badge" [class.docket__paid-badge--paid]="order.estadoFin === 'Pagado'">
+                {{ order.estadoFin === 'Pagado' ? 'Pagado ✓' : 'Por pagar' }}
+              </span>
+            </div>
+          </div>
+        }
+        @if (deliveredOrders().length === 0) {
+          <div class="kanban-empty">Sin entregas hoy</div>
         }
       </div>
     </div>

@@ -24,6 +24,11 @@
     text-decoration: none;
     color: #64748b;
     transition: color 0.15s;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
 
     &:hover {
       color: #94a3b8;
@@ -31,6 +36,14 @@
 
     &--active {
       color: #f59e0b;
+    }
+
+    &--logout {
+      color: #f87171;
+
+      &:hover {
+        color: #fca5a5;
+      }
     }
   }
 
