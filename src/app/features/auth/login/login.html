@@ -2,35 +2,35 @@
   <div class="login-card">
     <div class="login-card__header">
       <h1>HungryUp</h1>
-      <p>Restaurant Management System</p>
+      <p>Sistema de Gestión de Restaurante</p>
     </div>
 
     <form class="login-card__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="username">Usuario</label>
         <input
           id="username"
           type="text"
           formControlName="username"
-          placeholder="Enter your username"
+          placeholder="Ingresa tu usuario"
           autocomplete="username"
         />
         @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
-          <span class="field-error">Username is required.</span>
+          <span class="field-error">El usuario es requerido.</span>
         }
       </div>
 
       <div class="form-group">
-        <label for="password">Password</label>
+        <label for="password">Contraseña</label>
         <input
           id="password"
           type="password"
           formControlName="password"
-          placeholder="Enter your password"
+          placeholder="Ingresa tu contraseña"
           autocomplete="current-password"
         />
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-          <span class="field-error">Password is required.</span>
+          <span class="field-error">La contraseña es requerida.</span>
         }
       </div>
 
@@ -39,7 +39,7 @@
       }
 
       <button type="submit" [disabled]="loginForm.invalid || isLoading()">
-        {{ isLoading() ? 'Signing in...' : 'Sign In' }}
+        {{ isLoading() ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
       </button>
     </form>
   </div>

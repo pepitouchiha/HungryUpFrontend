@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { StatCard } from '../../components/stat-card/stat-card';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { TableService } from '../../../../core/services/table.service';
 
 const TICK   = '#64748b';
 const GRID   = 'rgba(51,65,85,0.6)';
@@ -9,30 +13,88 @@ const LEGEND = '#94a3b8';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [BaseChartDirective, StatCard],
+  imports: [BaseChartDirective, StatCard, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class Dashboard {
-  protected stats = [
-    { title: 'Monthly Revenue',  value: '$24,580', subtitle: 'June 2026',       icon: '💰', color: 'indigo' as const, trend: '+12% vs last month',  trendUp: true  },
-    { title: 'Orders Today',     value: '47',      subtitle: '8 in progress',   icon: '🧾', color: 'green'  as const, trend: '+5 vs yesterday',      trendUp: true  },
-    { title: 'Tables Occupied',  value: '5 / 15',  subtitle: 'Right now',       icon: '🪑', color: 'amber'  as const, trend: '33% occupancy',        trendUp: true  },
-    { title: 'Avg Ticket Value', value: '$52.30',  subtitle: 'Per order today', icon: '📈', color: 'red'    as const, trend: '−$3.20 vs last week',   trendUp: false },
-  ];
+export class Dashboard implements OnInit {
+  private analyticsService = inject(AnalyticsService);
+  private tableService     = inject(TableService);
 
-  // ── Bar chart: Daily sales ───────────────────────────────
-  protected barData: ChartData<'bar'> = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  protected loading = signal(true);
+  protected today   = new Date();
+
+  // ── Raw data signals ─────────────────────────────────────
+  private _dia    = signal({ ingresosTotales: 0, cantidadOrdenes: 0 });
+  private _semana = signal({ ingresosTotales: 0, cantidadOrdenes: 0 });
+  private _mes    = signal({ ingresosTotales: 0, cantidadOrdenes: 0 });
+  private _totalMesas = signal(0);
+
+  // ── Stat cards ───────────────────────────────────────────
+  protected stats = computed(() => {
+    const dia   = this._dia();
+    const mes   = this._mes();
+    const mesas = this._totalMesas();
+    const ticket = dia.cantidadOrdenes > 0
+      ? dia.ingresosTotales / dia.cantidadOrdenes
+      : 0;
+
+    return [
+      {
+        title:    'Ingresos hoy',
+        value:    this.formatCOP(dia.ingresosTotales),
+        subtitle: 'Pedidos pagados hoy',
+        icon:     '💰',
+        color:    'indigo' as const,
+        trend:    `${dia.cantidadOrdenes} pedido${dia.cantidadOrdenes !== 1 ? 's' : ''}`,
+        trendUp:  dia.cantidadOrdenes > 0,
+      },
+      {
+        title:    'Pedidos hoy',
+        value:    String(dia.cantidadOrdenes),
+        subtitle: 'Completados y pagados',
+        icon:     '🧾',
+        color:    'green' as const,
+        trend:    dia.cantidadOrdenes > 0 ? 'Con ventas hoy' : 'Sin ventas aún',
+        trendUp:  dia.cantidadOrdenes > 0,
+      },
+      {
+        title:    'Ingresos del mes',
+        value:    this.formatCOP(mes.ingresosTotales),
+        subtitle: 'Mes en curso',
+        icon:     '📅',
+        color:    'amber' as const,
+        trend:    `${mes.cantidadOrdenes} pedido${mes.cantidadOrdenes !== 1 ? 's' : ''} en el mes`,
+        trendUp:  mes.ingresosTotales > 0,
+      },
+      {
+        title:    'Ticket promedio',
+        value:    ticket > 0 ? this.formatCOP(ticket) : '—',
+        subtitle: 'Por pedido hoy',
+        icon:     '📈',
+        color:    'red' as const,
+        trend:    `${mesas} mesas configuradas`,
+        trendUp:  true,
+      },
+    ];
+  });
+
+  // ── Bar chart: ingresos por período ─────────────────────
+  protected barData = computed<ChartData<'bar'>>(() => ({
+    labels: ['Hoy', 'Esta semana', 'Este mes'],
     datasets: [{
-      label: 'Revenue ($)',
-      data: [1250, 980, 1450, 1100, 1680, 2100, 1890],
-      backgroundColor: 'rgba(245,158,11,0.8)',
-      borderColor: '#f59e0b',
+      label: 'Ingresos (COP)',
+      data: [
+        this._dia().ingresosTotales,
+        this._semana().ingresosTotales,
+        this._mes().ingresosTotales,
+      ],
+      backgroundColor: ['rgba(245,158,11,0.8)', 'rgba(99,102,241,0.8)', 'rgba(34,197,94,0.8)'],
+      borderColor:     ['#f59e0b', '#6366f1', '#22c55e'],
       borderWidth: 2,
       borderRadius: 6,
     }]
-  };
+  }));
 
   protected barOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
@@ -40,32 +102,58 @@ export class Dashboard {
     plugins: { legend: { labels: { color: LEGEND } } },
     scales: {
       x: { ticks: { color: TICK }, grid: { color: GRID } },
-      y: { ticks: { color: TICK }, grid: { color: GRID } },
+      y: { ticks: { color: TICK, callback: v => this.formatCOP(Number(v)) }, grid: { color: GRID } },
     }
   };
 
-  // ── Line chart: Weekly revenue ───────────────────────────
-  protected lineData: ChartData<'line'> = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+  // ── Bar chart: pedidos por período ───────────────────────
+  protected ordersData = computed<ChartData<'bar'>>(() => ({
+    labels: ['Hoy', 'Esta semana', 'Este mes'],
     datasets: [{
-      label: 'Revenue ($)',
-      data: [8200, 9450, 7800, 11200],
-      borderColor: '#22c55e',
-      backgroundColor: 'rgba(34,197,94,0.12)',
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#22c55e',
-      pointRadius: 5,
+      label: 'Pedidos pagados',
+      data: [
+        this._dia().cantidadOrdenes,
+        this._semana().cantidadOrdenes,
+        this._mes().cantidadOrdenes,
+      ],
+      backgroundColor: ['rgba(245,158,11,0.8)', 'rgba(99,102,241,0.8)', 'rgba(34,197,94,0.8)'],
+      borderColor:     ['#f59e0b', '#6366f1', '#22c55e'],
+      borderWidth: 2,
+      borderRadius: 6,
     }]
-  };
+  }));
 
-  protected lineOptions: ChartConfiguration<'line'>['options'] = {
+  protected ordersOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { labels: { color: LEGEND } } },
     scales: {
       x: { ticks: { color: TICK }, grid: { color: GRID } },
-      y: { ticks: { color: TICK }, grid: { color: GRID } },
+      y: { ticks: { color: TICK, stepSize: 1 }, grid: { color: GRID } },
     }
   };
+
+  ngOnInit(): void {
+    forkJoin({
+      dia:    this.analyticsService.getSummary('dia'),
+      semana: this.analyticsService.getSummary('semana'),
+      mes:    this.analyticsService.getSummary('mes'),
+      mesas:  this.tableService.getMesas(),
+    }).subscribe({
+      next: ({ dia, semana, mes, mesas }) => {
+        this._dia.set(dia);
+        this._semana.set(semana);
+        this._mes.set(mes);
+        this._totalMesas.set(mesas.length);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  private formatCOP(value: number): string {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency', currency: 'COP', maximumFractionDigits: 0
+    }).format(value);
+  }
 }

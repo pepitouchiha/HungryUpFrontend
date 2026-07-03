@@ -33,7 +33,7 @@ export class Login {
       error: (err) => {
         this.isLoading.set(false);
         this.errorMessage.set(
-          err.error?.message ?? 'Invalid credentials. Please try again.'
+          err.error?.message ?? 'Credenciales inválidas. Intenta de nuevo.'
         );
       }
     });

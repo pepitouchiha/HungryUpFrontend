@@ -1,38 +1,47 @@
 <div class="dashboard">
   <div class="page-header">
     <h1>Dashboard</h1>
-    <span class="page-header__date">June 2026</span>
+    <span class="page-header__date">{{ today | date:'MMMM yyyy' : '' : 'es-CO' }}</span>
   </div>
 
-  <!-- Stat Cards -->
-  <div class="stat-grid">
-    @for (s of stats; track s.title) {
-      <app-stat-card
-        [title]="s.title"
-        [value]="s.value"
-        [subtitle]="s.subtitle"
-        [icon]="s.icon"
-        [color]="s.color"
-        [trend]="s.trend"
-        [trendUp]="s.trendUp"
-      />
-    }
-  </div>
+  @if (loading()) {
+    <div class="dashboard-loading">
+      <span class="dashboard-loading__spinner"></span>
+      <p>Cargando datos...</p>
+    </div>
+  } @else {
 
-  <!-- Charts -->
-  <div class="charts-grid">
-    <div class="chart-card">
-      <h2 class="chart-card__title">Daily Sales — Last 7 Days</h2>
-      <div class="chart-card__body">
-        <canvas baseChart [data]="barData" [options]="barOptions" type="bar"></canvas>
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+      @for (s of stats(); track s.title) {
+        <app-stat-card
+          [title]="s.title"
+          [value]="s.value"
+          [subtitle]="s.subtitle"
+          [icon]="s.icon"
+          [color]="s.color"
+          [trend]="s.trend"
+          [trendUp]="s.trendUp"
+        />
+      }
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h2 class="chart-card__title">Ingresos por período</h2>
+        <div class="chart-card__body">
+          <canvas baseChart [data]="barData()" [options]="barOptions" type="bar"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2 class="chart-card__title">Pedidos por período</h2>
+        <div class="chart-card__body">
+          <canvas baseChart [data]="ordersData()" [options]="ordersOptions" type="bar"></canvas>
+        </div>
       </div>
     </div>
 
-    <div class="chart-card">
-      <h2 class="chart-card__title">Weekly Revenue — Last 4 Weeks</h2>
-      <div class="chart-card__body">
-        <canvas baseChart [data]="lineData" [options]="lineOptions" type="line"></canvas>
-      </div>
-    </div>
-  </div>
+  }
 </div>

@@ -1,6 +1,6 @@
 <div class="pos-layout">
 
-  <!-- ══ LEFT: Product Panel (70%) ═══════════════════════════ -->
+  <!-- ══ LEFT: Panel de Productos (70%) ═══════════════════════════ -->
   <section class="product-panel">
 
     <nav class="category-tabs">
@@ -49,14 +49,14 @@
 
   </section>
 
-  <!-- ══ RIGHT: Order Ticket (30%) ════════════════════════════ -->
+  <!-- ══ RIGHT: Ticket de Pedido (30%) ════════════════════════════ -->
   <aside class="ticket-panel">
 
     <div class="ticket-header">
-      <h2>Order Ticket</h2>
+      <h2>Ticket de Pedido</h2>
       @if (orderCount() > 0) {
-        <span class="ticket-count">{{ orderCount() }} item{{ orderCount() === 1 ? '' : 's' }}</span>
-        <button class="clear-btn" (click)="clearOrder()">Clear all</button>
+        <span class="ticket-count">{{ orderCount() }} ítem{{ orderCount() === 1 ? '' : 's' }}</span>
+        <button class="clear-btn" (click)="clearOrder()">Limpiar todo</button>
       }
     </div>
 
@@ -64,8 +64,8 @@
       @if (orderItems().length === 0) {
         <div class="ticket-empty">
           <span class="ticket-empty__icon">🧾</span>
-          <p>No items yet</p>
-          <p>Tap a product to add it</p>
+          <p>Sin productos aún</p>
+          <p>Toca un producto para agregar</p>
         </div>
       } @else {
         @for (item of orderItems(); track item.product.id) {
@@ -75,7 +75,7 @@
               <span class="ticket-item__subtotal">{{ item.product.precio * item.quantity | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
             </div>
             <div class="ticket-item__bottom">
-              <span class="ticket-item__unit-price">{{ item.product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }} each</span>
+              <span class="ticket-item__unit-price">{{ item.product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }} c/u</span>
               <div class="qty-controls">
                 <button class="qty-btn" (click)="decrement(item.product.id)">−</button>
                 <span class="qty-value">{{ item.quantity }}</span>
@@ -97,7 +97,7 @@
         [disabled]="orderItems().length === 0"
         (click)="payAndPrint()"
       >
-        PAY &amp; PRINT
+        PAGAR E IMPRIMIR
       </button>
     </div>
 
