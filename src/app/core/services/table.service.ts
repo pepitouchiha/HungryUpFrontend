@@ -15,8 +15,8 @@ export class TableService {
     return this.http.get<MesaDto[]>('/api/v1/mesas');
   }
 
-  createMesa(data: CreateMesaDto): Observable<MesaDto> {
-    return this.http.post<MesaDto>('/api/v1/mesas', data);
+  createMesa(): Observable<MesaDto> {
+    return this.http.post<MesaDto>('/api/v1/mesas', {});
   }
 
   updateMesa(id: string, data: UpdateMesaDto): Observable<MesaDto> {

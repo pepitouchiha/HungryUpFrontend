@@ -7,9 +7,7 @@ export interface MesaDto {
   activo: boolean;
 }
 
-export interface CreateMesaDto {
-  numero: number;
-}
+export interface CreateMesaDto {}
 
 export interface UpdateMesaDto {
   numero: number;

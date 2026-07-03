@@ -35,11 +35,14 @@ export class PosGourmet implements OnInit {
   protected allProducts         = signal<ProductoDto[]>([]);
   protected selectedCategoryId  = signal<string>('');
   protected panelOrderItems     = signal<OrderItem[]>([]);
+  protected searchQuery         = signal('');
   private   _productMap         = signal<Map<string, ProductoDto>>(new Map());
 
-  protected filteredProducts = computed(() =>
-    this.allProducts().filter(p => p.categoriaId === this.selectedCategoryId())
-  );
+  protected filteredProducts = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) return this.allProducts().filter(p => p.nombre.toLowerCase().includes(q));
+    return this.allProducts().filter(p => p.categoriaId === this.selectedCategoryId());
+  });
 
   protected panelTotal = computed(() =>
     this.panelOrderItems().reduce((sum, i) => sum + i.product.precio * i.quantity, 0)

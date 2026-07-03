@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { forkJoin } from 'rxjs';
@@ -6,6 +6,7 @@ import {
   CategoriaDto, ProductoDto, CreateProductoDto, UpdateProductoDto
 } from '../../../../shared/models/product.model';
 import { CatalogService } from '../../../../core/services/catalog.service';
+import { Toast, confirmDelete } from '../../../../shared/utils/swal';
 
 @Component({
   selector: 'app-catalog',
@@ -14,13 +15,48 @@ import { CatalogService } from '../../../../core/services/catalog.service';
   styleUrl: './catalog.scss'
 })
 export class Catalog implements OnInit {
+  @ViewChild('fileInput') private fileInputRef!: ElementRef<HTMLInputElement>;
+
   private fb             = inject(FormBuilder);
   private catalogService = inject(CatalogService);
 
-  protected activeTab  = signal<'categories' | 'products'>('products');
-  protected loading    = signal(true);
-  protected categories = signal<CategoriaDto[]>([]);
-  protected products   = signal<ProductoDto[]>([]);
+  protected activeTab      = signal<'categories' | 'products'>('products');
+  protected loading        = signal(true);
+  protected categories     = signal<CategoriaDto[]>([]);
+  protected products       = signal<ProductoDto[]>([]);
+  protected productSearch  = signal('');
+  protected categorySearch = signal('');
+  protected productPage    = signal(1);
+  protected categoryPage   = signal(1);
+  readonly  pageSize       = 8;
+
+  protected filteredProducts = computed(() => {
+    const q = this.productSearch().trim().toLowerCase();
+    return q ? this.products().filter(p => p.nombre.toLowerCase().includes(q)) : this.products();
+  });
+
+  protected filteredCategories = computed(() => {
+    const q = this.categorySearch().trim().toLowerCase();
+    return q ? this.categories().filter(c => c.nombre.toLowerCase().includes(q)) : this.categories();
+  });
+
+  protected pagedProducts = computed(() => {
+    const p = this.productPage();
+    return this.filteredProducts().slice((p - 1) * this.pageSize, p * this.pageSize);
+  });
+
+  protected pagedCategories = computed(() => {
+    const p = this.categoryPage();
+    return this.filteredCategories().slice((p - 1) * this.pageSize, p * this.pageSize);
+  });
+
+  protected productTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize))
+  );
+
+  protected categoryTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredCategories().length / this.pageSize))
+  );
 
   // ── Products ──────────────────────────────────────────────────────────────
   protected productModalMode   = signal<'create' | 'edit' | null>(null);
@@ -56,6 +92,9 @@ export class Catalog implements OnInit {
     });
   }
 
+  protected setProductSearch(q: string): void { this.productSearch.set(q); this.productPage.set(1); }
+  protected setCategorySearch(q: string): void { this.categorySearch.set(q); this.categoryPage.set(1); }
+
   // ── Product actions ─────────────────────────────────────────────────────
 
   protected openCreateProduct(): void {
@@ -87,10 +126,10 @@ export class Catalog implements OnInit {
       };
       this.catalogService.createProduct(dto).subscribe(prod => {
         this.products.update(ps => [...ps, prod]);
-        // Pasamos a modo edición para permitir subir la imagen del producto recién creado.
         this.editingProductId.set(prod.id);
         this.editingProductImage.set(prod.imagenUrl);
         this.productModalMode.set('edit');
+        Toast.fire({ icon: 'success', title: 'Producto creado' });
       });
     } else {
       const id = this.editingProductId()!;
@@ -101,37 +140,77 @@ export class Catalog implements OnInit {
       this.catalogService.updateProduct(id, dto).subscribe(updated => {
         this.products.update(ps => ps.map(p => p.id === id ? updated : p));
         this.closeProductModal();
+        Toast.fire({ icon: 'success', title: 'Producto actualizado' });
       });
     }
   }
 
-  protected onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.selectedFile.set(input.files?.[0] ?? null);
+  protected openFilePicker(): void {
+    this.fileInputRef.nativeElement.value = '';
+    this.fileInputRef.nativeElement.click();
   }
 
-  protected uploadImage(): void {
+  protected onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.selectedFile.set(file);
+    this.doUpload(file);
+  }
+
+  private doUpload(file: File): void {
     const id = this.editingProductId();
-    const file = this.selectedFile();
-    if (!id || !file) return;
+    if (!id) return;
 
     this.uploadingImage.set(true);
-    this.catalogService.uploadProductImage(id, file).subscribe({
-      next: updated => {
-        this.products.update(ps => ps.map(p => p.id === id ? updated : p));
-        this.editingProductImage.set(updated.imagenUrl);
-        this.selectedFile.set(null);
-        this.uploadingImage.set(false);
-      },
-      error: () => this.uploadingImage.set(false),
+    this.toWebP(file).then(webpFile => {
+      this.catalogService.uploadProductImage(id, webpFile).subscribe({
+        next: updated => {
+          this.products.update(ps => ps.map(p => p.id === id ? updated : p));
+          this.editingProductImage.set(updated.imagenUrl);
+          this.selectedFile.set(null);
+          this.uploadingImage.set(false);
+          Toast.fire({ icon: 'success', title: 'Imagen actualizada' });
+        },
+        error: () => {
+          this.uploadingImage.set(false);
+          Toast.fire({ icon: 'error', title: 'Error al subir la imagen' });
+        },
+      });
+    }).catch(() => {
+      this.uploadingImage.set(false);
+      Toast.fire({ icon: 'error', title: 'No se pudo convertir la imagen' });
+    });
+  }
+
+  private toWebP(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d')!.drawImage(img, 0, 0);
+        canvas.toBlob(blob => {
+          if (!blob) { reject(new Error('WebP conversion failed')); return; }
+          const name = file.name.replace(/\.[^.]+$/, '') + '.webp';
+          resolve(new File([blob], name, { type: 'image/webp' }));
+        }, 'image/webp', 0.9);
+      };
+      img.onerror = reject;
+      img.src = url;
     });
   }
 
   protected deleteProduct(prod: ProductoDto): void {
-    if (!confirm(`¿Eliminar el producto "${prod.nombre}"?`)) return;
-    this.catalogService.deleteProduct(prod.id).subscribe(() =>
-      this.products.update(ps => ps.filter(p => p.id !== prod.id))
-    );
+    confirmDelete(`Se eliminará el producto "${prod.nombre}".`).then(ok => {
+      if (!ok) return;
+      this.catalogService.deleteProduct(prod.id).subscribe(() => {
+        this.products.update(ps => ps.filter(p => p.id !== prod.id));
+        Toast.fire({ icon: 'success', title: 'Producto eliminado' });
+      });
+    });
   }
 
   protected closeProductModal(): void {
@@ -165,27 +244,33 @@ export class Catalog implements OnInit {
       this.catalogService.createCategory({ nombre: v.nombre }).subscribe(cat => {
         this.categories.update(cs => [...cs, cat]);
         this.closeCategoryModal();
+        Toast.fire({ icon: 'success', title: 'Categoría creada' });
       });
     } else {
       const id = this.editingCategoryId()!;
       this.catalogService.updateCategory(id, { nombre: v.nombre, activo: v.activo }).subscribe(updated => {
         this.categories.update(cs => cs.map(c => c.id === id ? updated : c));
         this.closeCategoryModal();
+        Toast.fire({ icon: 'success', title: 'Categoría actualizada' });
       });
     }
   }
 
   protected deleteCategory(cat: CategoriaDto): void {
-    if (!confirm(`¿Desactivar la categoría "${cat.nombre}"?`)) return;
-    this.catalogService.deleteCategory(cat.id).subscribe(() =>
-      this.categories.update(cs => cs.map(c => c.id === cat.id ? { ...c, activo: false } : c))
-    );
+    confirmDelete(`Se desactivará la categoría "${cat.nombre}".`).then(ok => {
+      if (!ok) return;
+      this.catalogService.deleteCategory(cat.id).subscribe(() => {
+        this.categories.update(cs => cs.map(c => c.id === cat.id ? { ...c, activo: false } : c));
+        Toast.fire({ icon: 'success', title: 'Categoría desactivada' });
+      });
+    });
   }
 
   protected restoreCategory(cat: CategoriaDto): void {
-    this.catalogService.updateCategory(cat.id, { nombre: cat.nombre, activo: true }).subscribe(updated =>
-      this.categories.update(cs => cs.map(c => c.id === cat.id ? updated : c))
-    );
+    this.catalogService.updateCategory(cat.id, { nombre: cat.nombre, activo: true }).subscribe(updated => {
+      this.categories.update(cs => cs.map(c => c.id === cat.id ? updated : c));
+      Toast.fire({ icon: 'success', title: 'Categoría restaurada' });
+    });
   }
 
   protected closeCategoryModal(): void {

@@ -18,7 +18,15 @@
   @if (activeTab() === 'products') {
     <div class="table-card">
       <div class="table-toolbar">
-        <span class="table-toolbar__info">{{ products().length }} productos</span>
+        <span class="table-toolbar__info">{{ filteredProducts().length }} de {{ products().length }} productos</span>
+        <div class="table-search">
+          <span class="table-search__icon">🔍</span>
+          <input class="table-search__input" type="text" placeholder="Buscar producto..."
+            [value]="productSearch()" (input)="setProductSearch($any($event.target).value)" />
+          @if (productSearch()) {
+            <button class="table-search__clear" (click)="setProductSearch('')">✕</button>
+          }
+        </div>
         <button class="btn-primary" (click)="openCreateProduct()">+ Nuevo Producto</button>
       </div>
       <table class="data-table">
@@ -33,7 +41,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (prod of products(); track prod.id) {
+          @for (prod of pagedProducts(); track prod.id) {
             <tr>
               <td>
                 @if (prod.imagenUrl) {
@@ -56,6 +64,13 @@
           }
         </tbody>
       </table>
+      @if (productTotalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="productPage() === 1" (click)="productPage.update(p => p - 1)">‹</button>
+          <span class="pagination__info">{{ productPage() }} / {{ productTotalPages() }}</span>
+          <button class="pagination__btn" [disabled]="productPage() === productTotalPages()" (click)="productPage.update(p => p + 1)">›</button>
+        </div>
+      }
     </div>
   }
 
@@ -63,7 +78,15 @@
   @if (activeTab() === 'categories') {
     <div class="table-card">
       <div class="table-toolbar">
-        <span class="table-toolbar__info">{{ categories().length }} categorías</span>
+        <span class="table-toolbar__info">{{ filteredCategories().length }} de {{ categories().length }} categorías</span>
+        <div class="table-search">
+          <span class="table-search__icon">🔍</span>
+          <input class="table-search__input" type="text" placeholder="Buscar categoría..."
+            [value]="categorySearch()" (input)="setCategorySearch($any($event.target).value)" />
+          @if (categorySearch()) {
+            <button class="table-search__clear" (click)="setCategorySearch('')">✕</button>
+          }
+        </div>
         <button class="btn-primary" (click)="openCreateCategory()">+ Nueva Categoría</button>
       </div>
       <table class="data-table">
@@ -75,7 +98,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (cat of categories(); track cat.id) {
+          @for (cat of pagedCategories(); track cat.id) {
             <tr>
               <td class="cell-name">{{ cat.nombre }}</td>
               <td>
@@ -97,6 +120,13 @@
           }
         </tbody>
       </table>
+      @if (categoryTotalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="categoryPage() === 1" (click)="categoryPage.update(p => p - 1)">‹</button>
+          <span class="pagination__info">{{ categoryPage() }} / {{ categoryTotalPages() }}</span>
+          <button class="pagination__btn" [disabled]="categoryPage() === categoryTotalPages()" (click)="categoryPage.update(p => p + 1)">›</button>
+        </div>
+      }
     </div>
   }
 </div>
@@ -154,13 +184,13 @@
                   <div class="product-thumb product-thumb--placeholder">🍽️</div>
                 }
                 <div class="image-uploader__controls">
-                  <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif" (change)="onFileSelected($event)" />
-                  <button type="button" class="btn-secondary" [disabled]="!selectedFile() || uploadingImage()" (click)="uploadImage()">
-                    {{ uploadingImage() ? 'Subiendo...' : 'Subir imagen' }}
+                  <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
+                  <button type="button" class="btn-secondary" [disabled]="uploadingImage()" (click)="openFilePicker()">
+                    {{ uploadingImage() ? 'Subiendo...' : '📁 Seleccionar imagen' }}
                   </button>
                 </div>
               </div>
-              <span class="field-hint">Formatos: jpg, jpeg, png, webp, gif. Máx. 5 MB.</span>
+              <span class="field-hint">Se convierte automáticamente a WebP. Máx. 5 MB.</span>
             </div>
           } @else {
             <p class="field-hint">Podrás subir una imagen una vez creado el producto.</p>

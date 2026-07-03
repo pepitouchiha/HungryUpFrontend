@@ -16,7 +16,6 @@
         <tr>
           <th>Número</th>
           <th>Estado</th>
-          <th>Activa</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -30,18 +29,9 @@
               </span>
             </td>
             <td>
-              <span class="status-badge" [class.status-badge--active]="mesa.activo" [class.status-badge--inactive]="!mesa.activo">
-                {{ mesa.activo ? 'Activa' : 'Inactiva' }}
-              </span>
-            </td>
-            <td>
               <div class="action-btns">
                 <button class="btn-icon" title="Editar" (click)="openEdit(mesa)">✏️</button>
-                @if (mesa.activo) {
-                  <button class="btn-icon btn-icon--danger" title="Desactivar" (click)="deleteMesa(mesa)">🗑️</button>
-                } @else {
-                  <button class="btn-icon btn-icon--success" title="Restaurar" (click)="restoreMesa(mesa)">♻️</button>
-                }
+                <button class="btn-icon btn-icon--danger" title="Eliminar" (click)="deleteMesa(mesa)">🗑️</button>
               </div>
             </td>
           </tr>
@@ -65,25 +55,21 @@
             <div class="form-error-banner">{{ formError() }}</div>
           }
           <div class="form-grid">
-            <div class="form-group form-group--full">
-              <label>Número <span class="required">*</span></label>
-              <input type="number" formControlName="numero" min="1" step="1" placeholder="1" />
-              @if (mesaForm.get('numero')?.invalid && mesaForm.get('numero')?.touched) {
-                <span class="field-error">Ingresa un número de mesa válido.</span>
-              }
-            </div>
             @if (modalMode() === 'edit') {
-              <div class="form-group">
+              <div class="form-group form-group--full">
+                <label>Número <span class="required">*</span></label>
+                <input type="number" formControlName="numero" min="1" step="1" placeholder="1" />
+                @if (mesaForm.get('numero')?.invalid && mesaForm.get('numero')?.touched) {
+                  <span class="field-error">Ingresa un número de mesa válido.</span>
+                }
+              </div>
+              <div class="form-group form-group--full">
                 <label>Estado</label>
                 <select formControlName="estado">
                   @for (estado of estados; track estado) {
                     <option [value]="estado">{{ estado }}</option>
                   }
                 </select>
-              </div>
-              <div class="form-group form-check">
-                <input type="checkbox" id="mesaActive" formControlName="activo" />
-                <label for="mesaActive">Activa</label>
               </div>
             }
           </div>

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Toast, confirmDelete } from '../../../../shared/utils/swal';
 import { UserRole, UserProfile } from '../../../../shared/models/user-enterprise-manager.model';
 import { UserService } from '../../../../core/services/user.service';
 
@@ -86,10 +87,13 @@ export class Users implements OnInit {
   }
 
   protected deleteUser(id: number): void {
-    if (!confirm('¿Desactivar este usuario?')) return;
-    this.userService.deleteUser(id).subscribe(() =>
-      this.users.update(us => us.map(u => u.id === id ? { ...u, activo: false } : u))
-    );
+    confirmDelete('Este usuario quedará inactivo.').then(ok => {
+      if (!ok) return;
+      this.userService.deleteUser(id).subscribe(() => {
+        this.users.update(us => us.map(u => u.id === id ? { ...u, activo: false } : u));
+        Toast.fire({ icon: 'success', title: 'Usuario desactivado' });
+      });
+    });
   }
 
   protected restoreUser(user: UserProfile): void {

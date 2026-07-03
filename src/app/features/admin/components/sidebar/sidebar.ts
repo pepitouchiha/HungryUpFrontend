@@ -20,7 +20,4 @@ export class Sidebar {
     { path: '/admin/users',     label: 'Users',     icon: '👥' },
   ];
 
-  protected logout(): void {
-    this.authService.logout();
-  }
 }

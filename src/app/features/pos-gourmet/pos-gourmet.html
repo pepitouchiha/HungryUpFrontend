@@ -96,20 +96,44 @@
         @for (cat of categories(); track cat.id) {
           <button
             class="panel-tab"
-            [class.active]="selectedCategoryId() === cat.id"
-            (click)="selectCategory(cat.id)"
+            [class.active]="selectedCategoryId() === cat.id && !searchQuery()"
+            (click)="selectCategory(cat.id); searchQuery.set('')"
           >
             {{ cat.nombre }}
           </button>
         }
       </nav>
 
-      <!-- Product Grid -->
+      <!-- Search -->
+      <div class="panel-search">
+        <span class="panel-search__icon">🔍</span>
+        <input
+          class="panel-search__input"
+          type="text"
+          placeholder="Buscar producto..."
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+        />
+        @if (searchQuery()) {
+          <button class="panel-search__clear" (click)="searchQuery.set('')">✕</button>
+        }
+      </div>
+
+      <!-- Product Strip -->
       <div class="panel-product-grid">
         @for (product of filteredProducts(); track product.id) {
           <button class="panel-product-card" (click)="addToPanel(product)">
-            <span class="panel-product-card__name">{{ product.nombre }}</span>
-            <span class="panel-product-card__price">{{ product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
+            <div class="panel-product-card__img">
+              @if (product.imagenUrl) {
+                <img [src]="product.imagenUrl" [alt]="product.nombre" />
+              } @else {
+                <span class="panel-product-card__img-placeholder">🍽️</span>
+              }
+            </div>
+            <div class="panel-product-card__body">
+              <span class="panel-product-card__name">{{ product.nombre }}</span>
+              <span class="panel-product-card__price">{{ product.precio | currency:'COP':'symbol':'1.0-0':'es-CO' }}</span>
+            </div>
           </button>
         }
       </div>

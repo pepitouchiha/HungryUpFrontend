@@ -1,9 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { forkJoin } from 'rxjs';
-import { PedidoDto, DetallePedidoDto } from '../../shared/models/order.model';
+import { PedidoDto } from '../../shared/models/order.model';
 import { ProductoDto } from '../../shared/models/product.model';
-import { MesaDto } from '../../shared/models/table.model';
 import { OrderService } from '../../core/services/order.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { TableService } from '../../core/services/table.service';

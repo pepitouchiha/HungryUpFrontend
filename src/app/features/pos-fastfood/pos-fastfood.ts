@@ -25,10 +25,13 @@ export class PosFastfood implements OnInit {
   protected selectedCategoryId = signal<string>('');
   protected orderItems         = signal<OrderItem[]>([]);
   protected loading            = signal(true);
+  protected searchQuery        = signal('');
 
-  protected filteredProducts = computed(() =>
-    this.allProducts().filter(p => p.categoriaId === this.selectedCategoryId())
-  );
+  protected filteredProducts = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) return this.allProducts().filter(p => p.nombre.toLowerCase().includes(q));
+    return this.allProducts().filter(p => p.categoriaId === this.selectedCategoryId());
+  });
 
   protected orderTotal = computed(() =>
     this.orderItems().reduce((sum, i) => sum + i.product.precio * i.quantity, 0)
@@ -53,6 +56,7 @@ export class PosFastfood implements OnInit {
 
   protected selectCategory(id: string): void {
     this.selectedCategoryId.set(id);
+    this.searchQuery.set('');
   }
 
   protected addToOrder(product: ProductoDto): void {
